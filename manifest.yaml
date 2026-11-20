@@ -39,110 +39,88 @@ persistence: none
 # It does not decide who owns the app, and nothing in this file does. Pippa
 # Labs created this repository for your Pippa account, so every app published
 # from it is yours. docs/REVIEW_AND_SHARING.md is the whole story.
-app_author_name: ""
+app_author_name: "Somna"
 
 app:
-  # Filled in for you. A new repository replaces this placeholder within a
-  # minute of being created, from the repository's name, and commits it as
-  # github-actions[bot] (.github/workflows/setup.yml). Until then the build
-  # publishes nothing.
-  #
-  # It must be `hack.` + this repository's name with `pippa-hack-` removed and
-  # every hyphen turned into an underscore:
-  #
-  #     Pippa-Labs/pippa-hack-tide-times  ->  hack.tide_times
-  #
-  # Hyphens are not valid in an app id anywhere. `git remote get-url origin`
-  # tells you the repository name.
+  # Must be `hack.` + this repository's name with `pippa-hack-` removed and
+  # every hyphen turned into an underscore.
   id: hack.app_a30e
-  name: Days Until
-  # The version you are pushing. Pippa keeps a copy of the code of every
-  # version, so pushing a new version never changes an older one: the approved
-  # version keeps working for everyone while you try the next.
-  #
-  # Until you submit a version for review you can push it again under the
-  # same number, as often as you like, and it is replaced. From the moment
-  # you press Submit for review it is frozen, so change this number before
-  # your next push (0.1.0 -> 0.1.1), or the push is refused.
-  #
-  # Three numbers: 0.1.0, not 0.1 and not v0.1.0. Pippa never compares them:
-  # your "latest" version is simply the one you pushed most recently.
-  # docs/REVIEW_AND_SHARING.md says which version you, your testers and
-  # everybody else get.
+  name: Golden Hour
   version: 0.1.0
-  # One or two sentences, written for someone deciding whether to install it.
-  # Say what it does and what it sends anywhere. Never use the word "by" — the
-  # badge Pippa shows is parsed from "[via <name> <version> by <author name>]"
-  # (the author name is `app_author_name` above) and splits on the first "by".
+  # Never use the word "b-y" here: the badge is split on it.
   summary: >-
-    Works out how many days there are until a date you name, and says which
-    day of the week it falls on.
+    Gives the golden hour and blue hour times for photography at a named
+    place, with sunrise, sunset and day length. It sends the place name to
+    Open-Meteo to look up its location and sun times.
 
-# Who can install it. `personal` means a person's own Pippa.
 agent_types:
   - personal
 
-# ── Outcomes: the things your app can be asked to do ─────────────────────────
-#
-# An outcome is one job. Pippa picks between your outcomes — and between your
-# app and every other app — by comparing the user's message against `summary`
-# and `example_phrases`. So those two fields are not documentation; they are
-# the behaviour that decides whether your app is used at all.
-#
-# Writing example phrases well:
-#   * Write how a PERSON would ask, not how you would name a function.
-#   * Use carrier words ("how long until"), not one specific subject —
-#     the subject changes every time and only dilutes the match.
-#   * Give each outcome its own words. Two outcomes sharing vocabulary tie,
-#     and a tie is resolved by a model guessing.
-#   * Avoid words another app owns. "today", "tomorrow", "this week" and
-#     "my calendar" belong to Pippa Diary; a phrase using them will lose.
-
 outcomes:
-  - id: days.until
-    summary: Count the days between now and a date, and name the weekday
+  - id: daylight.golden_hour
+    summary: >-
+      Golden hour and blue hour windows for photos at a place, plus sunrise,
+      sunset and how long the day is
     example_phrases:
-      - how many days until
-      - how long until
-      - how many sleeps until
-      - days left until
-      - what day of the week is
-    # What Pippa extracts from the user's message and hands you. A model reads
-    # `description` to do that extraction, so write it as an instruction to
-    # whoever is filling the field in.
+      - when is golden hour in
+      - best light for photos in
+      - what time is sunset and golden hour in
+      - when should i shoot photos at
+      - how long is the golden hour in
+      - what time is blue hour in
+      - sunrise and sunset times for photography in
+      - how many hours of daylight in
     inputs:
-      # `required: false`, although the app is useless without a date, and
-      # that is deliberate. A missing REQUIRED input is refused inside the
-      # runtime before your code runs, and the user is shown a message that
-      # blames your app for a question they asked perfectly reasonably. An
-      # optional input simply arrives absent, your code notices, and you
-      # raise an error that says something true. Keep `required: true` for
-      # inputs the extractor can always supply.
+      - name: place
+        type: string
+        required: false
+        description: >-
+          The town, city or place the user wants the light for, as they wrote
+          it, for example "Edinburgh", "Lisbon" or "Brighton" (for "the beach
+          in Brighton" give "Brighton"). If the message names no place, return
+          an empty string rather than guessing.
       - name: date
         type: string
         required: false
         description: >-
-          The target date, as the user wrote it — for example "25 December",
-          "2027-01-01" or "next Friday". If the message does not name a date,
-          return an empty string rather than guessing.
-      - name: timezone
-        type: timezone
-        required: false
-        description: The user's time zone, so "today" means their today.
-    # What you promise to return. Returning anything else is refused; omitting
-    # a declared field is refused too. Keep it small and specific.
+          The day the user asked about, exactly as they wrote it, for example
+          "Saturday", "tomorrow", "this weekend", "21 November" or
+          "2026-11-21". If the message does not mention a day or date, return
+          an empty string. Never invent or assume a date.
     output:
-      - name: days
-        type: integer
-        description: How many whole days until the date. Negative if it has passed.
-      - name: target_date
+      - name: sunrise
         type: string
-        description: The date you actually used, as YYYY-MM-DD.
-      - name: weekday
+        description: Local clock time of sunrise, HH:MM, in timezone_used.
+      - name: sunset
         type: string
-        description: The day of the week the date falls on.
-      - name: already_passed
-        type: boolean
+        description: Local clock time of sunset, HH:MM, in timezone_used.
+      - name: morning_golden_hour_start
+        type: string
+        description: Start of the morning golden hour (sunrise), HH:MM local.
+      - name: morning_golden_hour_end
+        type: string
+        description: End of the morning golden hour (about an hour after sunrise), HH:MM local.
+      - name: evening_golden_hour_start
+        type: string
+        description: Start of the evening golden hour (about an hour before sunset), HH:MM local.
+      - name: evening_golden_hour_end
+        type: string
+        description: End of the evening golden hour (sunset), HH:MM local.
+      - name: evening_blue_hour_end
+        type: string
+        description: End of the evening blue hour (about 30 minutes after sunset), HH:MM local.
+      - name: day_length_hours
+        type: number
+        description: Hours between sunrise and sunset, to two decimal places.
+      - name: place_used
+        type: string
+        description: The place the name was matched to (town, region, country).
+      - name: date_used
+        type: string
+        description: The date the times are for, as YYYY-MM-DD.
+      - name: timezone_used
+        type: string
+        description: The IANA time zone the clock times are in, such as Europe/London.
 
 # ── API keys your app needs (this example needs none) ────────────────────────
 #
